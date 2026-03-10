@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PELI EDITOR — Hub Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0f;--surface:#111118;--card:#16161f;--border:#252535;
+  --accent:#7c5cfc;--accent2:#fc5c7d;--text:#e8e8f0;--muted:#6b6b85;
+  --green:#32cd78;--red:#fc5c5c;
+  --ff:'Rajdhani',sans-serif;--fm:'Space Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--ff);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(124,92,252,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(124,92,252,.04) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0}
+
+header{position:sticky;top:0;z-index:100;background:rgba(10,10,15,.93);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-badge{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fm);font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.logo-title{font-size:18px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-family:var(--fm)}
+.gen-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;
+  color:#fff;font-family:var(--ff);font-size:14px;font-weight:700;letter-spacing:1px;
+  padding:10px 18px;cursor:pointer;white-space:nowrap;text-transform:uppercase;
+  box-shadow:0 0 20px rgba(124,92,252,.35);transition:transform .1s}
+.gen-btn:active{transform:scale(.96)}
+
+.app{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:20px 16px 100px;
+  display:flex;flex-direction:column;gap:16px}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.card-hd{padding:13px 18px;background:rgba(124,92,252,.07);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-title{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent);font-family:var(--fm);display:flex;align-items:center;gap:8px}
+.card-title .dot{width:6px;height:6px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px var(--accent)}
+.card-body{padding:18px}
+
+.field{margin-bottom:14px}.field:last-child{margin-bottom:0}
+.lbl{display:block;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:7px;font-family:var(--fm)}
+.inp{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:var(--fm);font-size:13px;padding:11px 14px;outline:none;
+  transition:border-color .2s;-webkit-appearance:none}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:var(--muted)}
+.hint{font-size:10px;color:var(--muted);font-family:var(--fm);line-height:1.6}
+.row{display:flex;gap:12px}.row .field{flex:1}
+
+/* COLOR ROWS */
+.col-block{display:flex;flex-direction:column;gap:10px}
+.col-row{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:12px 14px;display:flex;align-items:center;gap:12px}
+.col-row input[type=color]{width:32px;height:32px;border:none;border-radius:8px;
+  cursor:pointer;padding:0;background:none;flex-shrink:0;-webkit-appearance:none;overflow:hidden}
+.col-row input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.col-row input[type=color]::-webkit-color-swatch{border:none;border-radius:6px}
+.col-info{display:flex;flex-direction:column;gap:2px;flex:1}
+.col-name{font-size:13px;font-weight:600;color:var(--text)}
+.col-desc{font-size:10px;color:var(--muted);font-family:var(--fm)}
+.col-hex{font-size:11px;color:var(--text);font-family:var(--fm);background:var(--bg);
+  border:1px solid var(--border);border-radius:6px;padding:4px 8px;width:76px;outline:none;flex-shrink:0}
+
+/* NEON section */
+.neon-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;
+  display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.neon-preview{height:6px;border-radius:3px}
+.neon-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* SWITCH */
+.sw-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sw-left{display:flex;flex-direction:column;gap:2px}
+.sw-name{font-size:13px;font-weight:600;color:var(--text)}
+.sw-sub{font-size:10px;color:var(--muted);font-family:var(--fm)}
+.switch{position:relative;width:44px;height:24px;flex-shrink:0}
+.switch input{display:none}
+.sw-track{position:absolute;inset:0;background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;cursor:pointer;transition:background .2s,border-color .2s}
+.sw-track::after{content:'';position:absolute;width:18px;height:18px;top:2px;left:2px;
+  background:var(--muted);border-radius:50%;transition:transform .2s,background .2s}
+.switch input:checked + .sw-track{background:rgba(124,92,252,.2);border-color:var(--accent)}
+.switch input:checked + .sw-track::after{transform:translateX(20px);background:var(--accent)}
+
+/* ICON MODE */
+.mode-tabs{display:flex;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:3px;margin-bottom:12px}
+.mode-tab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;font-family:var(--fm);
+  border-radius:8px;cursor:pointer;border:none;background:none;color:var(--muted);transition:background .2s,color .2s}
+.mode-tab.active{background:var(--accent);color:#fff}
+
+/* TABS */
+.tab-list{display:flex;flex-direction:column;gap:10px}
+.tab-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:12px 14px;display:flex;align-items:center;gap:10px}
+.tab-item input{flex:1;background:none;border:none;outline:none;color:var(--text);
+  font-family:var(--fm);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.tab-num{font-size:10px;color:var(--muted);font-family:var(--fm);background:var(--bg);
+  border-radius:5px;padding:3px 7px;flex-shrink:0}
+
+/* BUTTONS */
+.add-btn{background:rgba(124,92,252,.1);border:1px dashed rgba(124,92,252,.4);border-radius:12px;
+  color:var(--accent);font-family:var(--ff);font-size:13px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;padding:12px;width:100%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.del-btn{background:rgba(252,92,92,.12);border:1px solid rgba(252,92,92,.25);color:var(--red);
+  border-radius:8px;font-size:14px;width:32px;height:32px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+.btns-section{display:flex;flex-direction:column;gap:14px}
+.tab-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tab-badge{font-size:11px;font-weight:700;letter-spacing:1.5px;font-family:var(--fm);
+  color:var(--accent2);background:rgba(252,92,125,.1);border:1px solid rgba(252,92,125,.25);
+  border-radius:6px;padding:3px 10px;text-transform:uppercase}
+.btn-list{display:flex;flex-direction:column;gap:10px}
+
+.btn-item{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px;
+  display:flex;flex-direction:column;gap:10px}
+.btn-top{display:flex;align-items:center;gap:8px}
+.type-pill{font-size:9px;font-weight:700;letter-spacing:1px;font-family:var(--fm);
+  padding:5px 10px;border-radius:20px;text-transform:uppercase;flex-shrink:0;cursor:pointer;border:none}
+.pill-t{background:rgba(50,205,120,.15);color:var(--green);border:1px solid rgba(50,205,120,.3)}
+.pill-s{background:rgba(124,92,252,.15);color:var(--accent);border:1px solid rgba(124,92,252,.3)}
+.btn-top .name-inp{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:var(--ff);font-size:13px;font-weight:600;padding:8px 10px;outline:none}
+.btn-top .name-inp:focus{border-color:var(--accent)}
+
+/* Button text color row */
+.btn-color-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;
+  display:flex;align-items:center;gap:10px}
+.btn-color-section input[type=color]{width:28px;height:28px;border:none;border-radius:6px;
+  cursor:pointer;padding:0;background:none;flex-shrink:0;-webkit-appearance:none;overflow:hidden}
+.btn-color-section input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.btn-color-section input[type=color]::-webkit-color-swatch{border:none;border-radius:4px}
+.btn-color-section .col-label{font-size:11px;color:var(--muted);font-family:var(--fm);font-weight:600}
+.btn-color-section .col-preview{width:48px;height:18px;border-radius:4px;margin-left:4px;border:1px solid var(--border)}
+.btn-color-hex{font-size:11px;color:var(--text);font-family:var(--fm);background:var(--bg);
+  border:1px solid var(--border);border-radius:6px;padding:3px 7px;width:72px;outline:none;margin-left:auto}
+
+/* Slider range */
+.slider-extra{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.slider-extra span{color:var(--muted);font-family:var(--fm);font-size:11px}
+.slider-extra input[type=number]{width:70px;background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:var(--fm);font-size:12px;padding:6px 8px;outline:none}
+
+/* MINI */
+.mini-list{display:flex;flex-direction:column;gap:12px}
+.mini-item{background:var(--surface);border:1px solid rgba(124,92,252,.35);border-radius:12px;padding:14px;
+  display:flex;flex-direction:column;gap:10px}
+.mini-hdr{display:flex;align-items:center;gap:8px}
+.mini-badge{font-size:9px;font-weight:700;letter-spacing:1px;font-family:var(--fm);
+  background:rgba(124,92,252,.15);color:var(--accent);border:1px solid rgba(124,92,252,.3);
+  border-radius:6px;padding:3px 8px;text-transform:uppercase;flex-shrink:0}
+
+/* OUTPUT */
+.out-area{background:#0d0d12;border:1px solid var(--border);border-radius:10px;padding:14px;
+  font-family:var(--fm);font-size:11px;color:#c9c9d9;line-height:1.7;
+  white-space:pre;overflow-x:auto;max-height:380px;overflow-y:auto}
+.out-actions{display:flex;gap:10px;margin-top:12px}
+.copy-btn{flex:1;background:var(--accent);border:none;border-radius:10px;color:#fff;
+  font-family:var(--ff);font-size:15px;font-weight:700;letter-spacing:1px;padding:15px;
+  cursor:pointer;text-transform:uppercase;transition:background .2s,transform .1s}
+.copy-btn:active{transform:scale(.97)}.copy-btn.ok{background:var(--green)}
+.dl-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);
+  font-family:var(--ff);font-size:14px;font-weight:700;padding:14px 18px;cursor:pointer;text-transform:uppercase}
+.out-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:40px 20px;color:var(--muted);text-align:center}
+.out-ph .ico{font-size:36px;opacity:.4}
+.out-ph p{font-family:var(--fm);font-size:12px}
+
+/* divider */
+.divider{height:1px;background:var(--border);margin:4px 0}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+@media(max-width:480px){.row{flex-direction:column;gap:0}.neon-pair{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<textarea id="__ta" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;" readonly></textarea>
+
+<header>
+  <div class="logo">
+    <div class="logo-badge">PE</div>
+    <div>
+      <div class="logo-title">PELI EDITOR</div>
+      <div class="logo-sub">Hub Generator v5</div>
+    </div>
+  </div>
+  <button class="gen-btn" onclick="generateScript()">⚡ Gerar Script</button>
+</header>
+
+<div class="app">
+
+  <!-- IDENTIDADE -->
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><span class="dot"></span>Identidade</div></div>
+    <div class="card-body">
+      <div class="row">
+        <div class="field"><label class="lbl">Nome do Hub</label><input class="inp" id="hubName" value="lomene"></div>
+        <div class="field"><label class="lbl">Subtítulo</label><input class="inp" id="hubSub" value="Universal Hub"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÍCONE -->
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><span class="dot"></span>Ícone do Botão</div></div>
+    <div class="card-body">
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="modeLetters" onclick="setIconMode('letters')">✏️ Letras</button>
+        <button class="mode-tab" id="modeId" onclick="setIconMode('id')">🖼️ Imagem ID</button>
+      </div>
+      <div id="fLetters" class="field">
+        <label class="lbl">Duas Letras</label>
+        <input class="inp" id="iconLetters" maxlength="2" value="WL" style="text-transform:uppercase;letter-spacing:4px;font-size:20px;text-align:center">
+      </div>
+      <div id="fId" style="display:none">
+        <div class="field"><label class="lbl">Roblox Image ID</label><input class="inp" id="iconId" placeholder="rbxassetid://123456789"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CORES -->
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><span class="dot"></span>Cores da Interface</div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
+
+      <div class="col-block">
+        <!-- Laterais -->
+        <div class="col-row">
+          <input type="color" id="cSide" value="#7c5cfc" onchange="chSync('cSide','hSide')">
+          <div class="col-info"><span class="col-name">Cor das Laterais</span><span class="col-desc">Barra do topo e borda da interface</span></div>
+          <input class="col-hex" id="hSide" value="#7c5cfc" oninput="chSyncHex('cSide','hSide')" onblur="chNorm('cSide','hSide')">
+        </div>
+        <!-- Fundo -->
+        <div class="col-row">
+          <input type="color" id="cBg" value="#1a1a2e" onchange="chSync('cBg','hBg')">
+          <div class="col-info"><span class="col-name">Cor do Fundo</span><span class="col-desc">Background da janela principal</span></div>
+          <input class="col-hex" id="hBg" value="#1a1a2e" oninput="chSyncHex('cBg','hBg')" onblur="chNorm('cBg','hBg')">
+        </div>
+        <!-- Botões -->
+        <div class="col-row">
+          <input type="color" id="cBtn" value="#2a2a45" onchange="chSync('cBtn','hBtn')">
+          <div class="col-info"><span class="col-name">Cor dos Botões</span><span class="col-desc">Background dos toggles e sliders</span></div>
+          <input class="col-hex" id="hBtn" value="#2a2a45" oninput="chSyncHex('cBtn','hBtn')" onblur="chNorm('cBtn','hBtn')">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- NEON TOGGLE -->
+      <div class="sw-row">
+        <div class="sw-left">
+          <span class="sw-name">✨ Cor Neon nas Bordas</span>
+          <span class="sw-sub">Degradê de duas cores na borda da interface</span>
+        </div>
+        <label class="switch"><input type="checkbox" id="optNeon" onchange="toggleNeonBox()"><span class="sw-track"></span></label>
+      </div>
+
+      <div id="neonBox" style="display:none">
+        <div class="neon-box">
+          <div id="neonPrev" class="neon-preview" style="background:linear-gradient(90deg,#00f5ff,#bf00ff)"></div>
+          <div class="neon-pair">
+            <div class="col-row" style="padding:10px">
+              <input type="color" id="cN1" value="#00f5ff" onchange="chSync('cN1','hN1');updNeon()">
+              <div class="col-info"><span class="col-name">Neon 1</span></div>
+              <input class="col-hex" id="hN1" value="#00f5ff" oninput="chSyncHex('cN1','hN1');updNeon()" onblur="chNorm('cN1','hN1')">
+            </div>
+            <div class="col-row" style="padding:10px">
+              <input type="color" id="cN2" value="#bf00ff" onchange="chSync('cN2','hN2');updNeon()">
+              <div class="col-info"><span class="col-name">Neon 2</span></div>
+              <input class="col-hex" id="hN2" value="#bf00ff" oninput="chSyncHex('cN2','hN2');updNeon()" onblur="chNorm('cN2','hN2')">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- RGB SUAVE -->
+      <div class="sw-row">
+        <div class="sw-left">
+          <span class="sw-name">🌈 RGB Suave no Título</span>
+          <span class="sw-sub">Título muda de cor lentamente</span>
+        </div>
+        <label class="switch"><input type="checkbox" id="optRGB"><span class="sw-track"></span></label>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- OPÇÕES -->
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><span class="dot"></span>Opções</div></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="sw-row"><div class="sw-left"><span class="sw-name">Anti-AFK</span></div>
+        <label class="switch"><input type="checkbox" id="optAntiAfk" checked><span class="sw-track"></span></label></div>
+      <div class="sw-row"><div class="sw-left"><span class="sw-name">Contador de FPS</span></div>
+        <label class="switch"><input type="checkbox" id="optFPS" checked><span class="sw-track"></span></label></div>
+      <div class="sw-row"><div class="sw-left"><span class="sw-name">Animação de Abertura</span></div>
+        <label class="switch"><input type="checkbox" id="optAnim" checked><span class="sw-track"></span></label></div>
+      <div class="sw-row"><div class="sw-left"><span class="sw-name">Notificação ao Abrir</span></div>
+        <label class="switch"><input type="checkbox" id="optNotif" checked><span class="sw-track"></span></label></div>
+    </div>
+  </div>
+
+  <!-- PÁGINAS -->
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><span class="dot"></span>Páginas (Tabs)</div></div>
+    <div class="card-body">
+      <div class="tab-list" id="tabList"></div>
+      <div style="margin-top:10px"><button class="add-btn" onclick="addTab()">＋ Adicionar Página</button></div>
+    </div>
+  </div>
+
+  <!-- BOTÕES -->
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><span class="dot"></span>Botões por Página</div></div>
+    <div class="card-body"><div class="btns-section" id="btnsSection"></div></div>
+  </div>
+
+  <!-- MINI INTERFACES -->
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><span class="dot"></span>Mini Interfaces Flutuantes</div></div>
+    <div class="card-body">
+      <p class="hint" style="margin-bottom:14px">
+        Janelinha flutuante e arrastável que aparece quando um Toggle é ativado na interface principal.
+        O botão dentro dela fica <strong style="color:var(--red)">vermelho</strong> quando a função está ativa e normal quando desativada.
+        Só desaparece quando o Toggle for desligado na interface principal.
+      </p>
+      <div class="mini-list" id="miniList"></div>
+      <div style="margin-top:10px"><button class="add-btn" onclick="addMini()">＋ Adicionar Mini Interface</button></div>
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><span class="dot"></span>Script Gerado</div></div>
+    <div class="card-body">
+      <div id="outWrap"><div class="out-ph"><div class="ico">⚡</div><p>Clique em "Gerar Script" no topo.</p></div></div>
+      <div class="out-actions" id="outActions" style="display:none">
+        <button class="copy-btn" id="copyBtn" onclick="copyScript()">📋 Copiar Script</button>
+        <button class="dl-btn" onclick="dlScript()">⬇ .lua</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var iconMode = 'letters';
+var generatedScript = '';
+var tabs = ['MAIN','FPS'];
+var buttons = {
+  'MAIN':[
+    {type:'toggle',name:'Super Jump',def:false,color:'#ffffff'},
+    {type:'slider',name:'Walk Speed',min:16,max:200,def:50,color:'#ffffff'},
+    {type:'slider',name:'Jump Power',min:50,max:300,def:150,color:'#ffffff'}
+  ],
+  'FPS':[
+    {type:'toggle',name:'Disable Particles',def:false,color:'#ffffff'},
+    {type:'toggle',name:'Show FPS',def:false,color:'#ffffff'}
+  ]
+};
+var minis = [];
+
+// ── COLOR HELPERS ─────────────────────────────────────────────────────────────
+function chSync(cid, hid) {
+  document.getElementById(hid).value = document.getElementById(cid).value;
+  if (cid === 'cN1' || cid === 'cN2') updNeon();
+}
+function chSyncHex(cid, hid) {
+  var v = document.getElementById(hid).value;
+  if (/^#[0-9A-Fa-f]{6}$/.test(v)) document.getElementById(cid).value = v;
+  if (cid === 'cN1' || cid === 'cN2') updNeon();
+}
+function chNorm(cid, hid) {
+  var v = document.getElementById(hid).value;
+  if (v[0] !== '#') v = '#' + v;
+  if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
+    document.getElementById(hid).value = v;
+    document.getElementById(cid).value = v;
+  } else {
+    document.getElementById(hid).value = document.getElementById(cid).value;
+  }
+  if (cid === 'cN1' || cid === 'cN2') updNeon();
+}
+function gc(id) { return document.getElementById(id).value; }
+function gb(id) { return document.getElementById(id).checked; }
+function gv(id) { return document.getElementById(id).value.trim(); }
+function hexRGB(h) {
+  h = h.replace('#','');
+  if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  return parseInt(h.slice(0,2),16)+', '+parseInt(h.slice(2,4),16)+', '+parseInt(h.slice(4,6),16);
+}
+function updNeon() {
+  document.getElementById('neonPrev').style.background =
+    'linear-gradient(90deg,' + gc('cN1') + ',' + gc('cN2') + ')';
+}
+function toggleNeonBox() {
+  document.getElementById('neonBox').style.display = gb('optNeon') ? '' : 'none';
+}
+function toKey(name) {
+  var k = (name||'btn')
+    .replace(/\s+([a-zA-Z])/g, function(_,c){return c.toUpperCase();})
+    .replace(/\s+/g,'')
+    .replace(/[^a-zA-Z0-9_]/g,'');
+  if (!k) k = 'btn';
+  if (/^[0-9]/.test(k)) k = 'b' + k;
+  return k;
+}
+function setIconMode(m) {
+  iconMode = m;
+  document.getElementById('modeLetters').classList.toggle('active', m==='letters');
+  document.getElementById('modeId').classList.toggle('active', m==='id');
+  document.getElementById('fLetters').style.display = m==='letters' ? '' : 'none';
+  document.getElementById('fId').style.display = m==='id' ? '' : 'none';
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function renderTabs() {
+  var l = document.getElementById('tabList'); l.innerHTML = '';
+  tabs.forEach(function(tab, i) {
+    var d = document.createElement('div'); d.className = 'tab-item';
+    d.innerHTML = '<span class="tab-num">#'+(i+1)+'</span>'
+      +'<input value="'+tab+'" maxlength="12" style="text-transform:uppercase" oninput="renameTab('+i+',this.value)">'
+      +(tabs.length>1 ? '<button class="del-btn" onclick="removeTab('+i+')">✕</button>' : '');
+    l.appendChild(d);
+  });
+  renderButtons(); renderMinis();
+}
+function addTab() {
+  if (tabs.length >= 6) return;
+  var n = 'TAB'+(tabs.length+1); tabs.push(n); buttons[n]=[]; renderTabs();
+}
+function removeTab(i) { delete buttons[tabs[i]]; tabs.splice(i,1); renderTabs(); }
+function renameTab(i, v) {
+  var old = tabs[i];
+  var nn = v.toUpperCase().replace(/[^A-Z0-9_]/g,'').slice(0,12) || old;
+  buttons[nn] = buttons[old]||[]; if(nn!==old) delete buttons[old]; tabs[i]=nn;
+  setTimeout(function(){renderButtons();renderMinis();},0);
+}
+
+// ── BUTTONS ───────────────────────────────────────────────────────────────────
+function renderButtons() {
+  var sec = document.getElementById('btnsSection'); sec.innerHTML = '';
+  tabs.forEach(function(tab) {
+    if (!buttons[tab]) buttons[tab] = [];
+    var wrap = document.createElement('div');
+    var hdr = document.createElement('div'); hdr.className = 'tab-hdr';
+    hdr.innerHTML = '<span class="tab-badge">'+tab+'</span>'
+      +'<button class="add-btn" style="width:auto;padding:7px 14px;font-size:12px" onclick="addButton(\''+tab+'\')">＋ Botão</button>';
+    wrap.appendChild(hdr);
+    var list = document.createElement('div'); list.className = 'btn-list';
+    (buttons[tab]||[]).forEach(function(btn,j){ list.appendChild(mkBtnEl(tab,j,btn)); });
+    wrap.appendChild(list); sec.appendChild(wrap);
+  });
+}
+
+function mkBtnEl(tab, idx, btn) {
+  var div = document.createElement('div'); div.className = 'btn-item';
+
+  // ── TOP ROW ──
+  var top = document.createElement('div'); top.className = 'btn-top';
+  var tp = document.createElement('button');
+  tp.className = 'type-pill '+(btn.type==='toggle'?'pill-t':'pill-s');
+  tp.textContent = btn.type==='toggle'?'Toggle':'Slider';
+  tp.onclick = function(){ buttons[tab][idx].type = btn.type==='toggle'?'slider':'toggle'; renderButtons(); renderMinis(); };
+  var ni = document.createElement('input'); ni.className = 'name-inp';
+  ni.value = btn.name; ni.placeholder = 'Nome do botão';
+  ni.oninput = function(e){ buttons[tab][idx].name=e.target.value; setTimeout(renderMinis,0); };
+  var db = document.createElement('button'); db.className = 'del-btn'; db.textContent = '✕';
+  db.onclick = function(){ buttons[tab].splice(idx,1); renderButtons(); renderMinis(); };
+  top.appendChild(tp); top.appendChild(ni); top.appendChild(db); div.appendChild(top);
+
+  // ── COLOR ROW ──
+  var colorVal = btn.color || '#ffffff';
+  // Unique ID for this button's color inputs
+  var cid = 'bc_'+tab+'_'+idx;
+  var hid = 'bh_'+tab+'_'+idx;
+  var previd = 'bp_'+tab+'_'+idx;
+
+  var cRow = document.createElement('div'); cRow.className = 'btn-color-section';
+  cRow.innerHTML =
+    '<input type="color" id="'+cid+'" value="'+colorVal+'">'
+    +'<span class="col-label">Cor das letras</span>'
+    +'<div id="'+previd+'" class="col-preview" style="background:'+colorVal+'"></div>'
+    +'<input class="btn-color-hex" id="'+hid+'" value="'+colorVal+'" maxlength="7">';
+
+  div.appendChild(cRow);
+
+  // Wire up after appending (so elements exist in DOM)
+  setTimeout(function(){
+    var cpEl = document.getElementById(cid);
+    var hpEl = document.getElementById(hid);
+    var pvEl = document.getElementById(previd);
+    if (!cpEl || !hpEl || !pvEl) return;
+
+    function applyColor(hex) {
+      if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return;
+      buttons[tab][idx].color = hex;
+      cpEl.value = hex;
+      hpEl.value = hex;
+      pvEl.style.background = hex;
+    }
+
+    cpEl.addEventListener('input', function(){ applyColor(this.value); });
+    cpEl.addEventListener('change', function(){ applyColor(this.value); });
+
+    hpEl.addEventListener('input', function(){
+      var v = this.value;
+      if (v[0] !== '#') v = '#' + v;
+      if (/^#[0-9A-Fa-f]{6}$/.test(v)) applyColor(v);
+    });
+    hpEl.addEventListener('blur', function(){
+      var v = this.value;
+      if (v[0] !== '#') v = '#' + v;
+      if (/^#[0-9A-Fa-f]{6}$/.test(v)) { applyColor(v); }
+      else { this.value = cpEl.value; }
+    });
+  }, 0);
+
+  // ── SLIDER RANGE ──
+  if (btn.type === 'slider') {
+    var r = document.createElement('div'); r.className = 'slider-extra';
+    r.innerHTML = '<span>Min</span><input type="number" value="'+(btn.min||0)+'" oninput="buttons[\''+tab+'\']['+idx+'].min=+this.value">'
+      +'<span>Max</span><input type="number" value="'+(btn.max||100)+'" oninput="buttons[\''+tab+'\']['+idx+'].max=+this.value">'
+      +'<span>Default</span><input type="number" value="'+(btn.def||50)+'" oninput="buttons[\''+tab+'\']['+idx+'].def=+this.value">';
+    div.appendChild(r);
+  }
+
+  return div;
+}
+
+function addButton(tab) {
+  if (!buttons[tab]) buttons[tab] = [];
+  buttons[tab].push({type:'toggle',name:'Botão '+(buttons[tab].length+1),def:false,color:'#ffffff'});
+  renderButtons();
+}
+
+// ── MINI INTERFACES ───────────────────────────────────────────────────────────
+function getAllToggles() {
+  var res = [];
+  tabs.forEach(function(tab){
+    (buttons[tab]||[]).forEach(function(btn,j){
+      if (btn.type==='toggle') res.push({tab:tab,idx:j,name:btn.name,key:toKey(btn.name)});
+    });
+  });
+  return res;
+}
+
+function renderMinis() {
+  var list = document.getElementById('miniList'); list.innerHTML = '';
+  var toggles = getAllToggles();
+  minis.forEach(function(mini,i){
+    var div = document.createElement('div'); div.className = 'mini-item';
+
+    // header
+    var hdr = document.createElement('div'); hdr.className = 'mini-hdr';
+    hdr.innerHTML = '<span class="mini-badge">Mini #'+(i+1)+'</span>';
+    var db = document.createElement('button'); db.className = 'del-btn'; db.style.marginLeft='auto'; db.textContent='✕';
+    db.onclick = function(){ minis.splice(i,1); renderMinis(); };
+    hdr.appendChild(db); div.appendChild(hdr);
+
+    // title + btn text
+    var r1 = document.createElement('div'); r1.className='row';
+    r1.innerHTML = '<div class="field"><label class="lbl">Título da Mini Interface</label>'
+      +'<input class="inp" value="'+escH(mini.title)+'" placeholder="Ex: Super Jump" oninput="minis['+i+'].title=this.value"></div>'
+      +'<div class="field"><label class="lbl">Texto do Botão</label>'
+      +'<input class="inp" value="'+escH(mini.btnText)+'" placeholder="Ex: Ativar" oninput="minis['+i+'].btnText=this.value"></div>';
+    div.appendChild(r1);
+
+    // linked toggle
+    var r2 = document.createElement('div'); r2.className='field';
+    var opts = '<option value="">-- Escolha o Toggle vinculado --</option>';
+    toggles.forEach(function(t){
+      opts += '<option value="'+t.key+'"'+(mini.linkedKey===t.key?' selected':'')+'>['+t.tab+'] '+escH(t.name)+'</option>';
+    });
+    r2.innerHTML = '<label class="lbl">Toggle que ativa esta mini interface</label>'
+      +'<select class="inp" onchange="minis['+i+'].linkedKey=this.value">'+opts+'</select>';
+    div.appendChild(r2);
+
+    list.appendChild(div);
+  });
+}
+
+function addMini() {
+  minis.push({title:'Mini Atalho', btnText:'Ativar', linkedKey:''});
+  renderMinis();
+}
+
+function escH(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+// ── SCRIPT BUILDER ────────────────────────────────────────────────────────────
+function buildScript() {
+  var hubName = gv('hubName') || 'lomene';
+  var hubSub  = gv('hubSub')  || 'Universal Hub';
+  var letters = document.getElementById('iconLetters').value.toUpperCase().slice(0,2) || 'WL';
+  var imgId   = gv('iconId');
+  var useImg  = (iconMode==='id' && imgId!=='');
+  var antiAfk = gb('optAntiAfk');
+  var useFPS  = gb('optFPS');
+  var useAnim = gb('optAnim');
+  var useNotif= gb('optNotif');
+  var useNeon = gb('optNeon');
+  var useRGB  = gb('optRGB');
+
+  var cSide = gc('cSide');
+  var cBg   = gc('cBg');
+  var cBtn  = gc('cBtn');
+  var cN1   = gc('cN1');
+  var cN2   = gc('cN2');
+
+  var tabNames = tabs.filter(function(t){ return t.trim()!==''; });
+
+  var allBtns = [];
+  tabNames.forEach(function(tab){
+    (buttons[tab]||[]).forEach(function(btn){
+      allBtns.push({
+        type: btn.type, name: btn.name, key: toKey(btn.name),
+        min: btn.min, max: btn.max, def: btn.def,
+        color: btn.color || '#ffffff'
+      });
+    });
+  });
+
+  var keys = allBtns.map(function(b){ return b.key; });
+  var hasSuperJump = keys.indexOf('SuperJump') !== -1;
+  var hasWalkSpeed = keys.indexOf('WalkSpeed') !== -1;
+  var hasJumpPower = keys.indexOf('JumpPower') !== -1;
+
+  var validMinis = minis.filter(function(m){ return m.linkedKey && m.linkedKey !== ''; });
+
+  var L = [];
+  function ln(s){ L.push(s === undefined ? '' : s); }
+
+  // ── HEAD ──
+  ln('-- '+hubName+' - '+hubSub);
+  ln('-- Generated with PELI EDITOR v5');
+  ln();
+  ln('local player = game.Players.LocalPlayer');
+  ln('local RunService = game:GetService("RunService")');
+  ln('local TweenService = game:GetService("TweenService")');
+  ln('local UserInputService = game:GetService("UserInputService")');
+  ln();
+
+  if (antiAfk) {
+    ln('local VirtualUser = game:GetService("VirtualUser")');
+    ln('player.Idled:Connect(function()');
+    ln('\tVirtualUser:CaptureController()');
+    ln('\tVirtualUser:ClickButton2(Vector2.new())');
+    ln('end)');
+    ln();
+  }
+
+  // ── CONFIG ──
+  ln('local CONFIG = {');
+  allBtns.forEach(function(btn){
+    if (btn.type==='toggle') ln('\t'+btn.key+' = false,');
+    else ln('\t'+btn.key+' = '+(btn.def||50)+',');
+  });
+  if (useFPS && keys.indexOf('ShowFPS')===-1)            ln('\tShowFPS = false,');
+  if (useFPS && keys.indexOf('DisableParticles')===-1)   ln('\tDisableParticles = false,');
+  ln('}');
+  ln();
+
+  ln('local currentTab = "'+tabNames[0]+'"');
+  ln('local connections = {}');
+  ln();
+
+  // ── COLORS ──
+  ln('local C = {');
+  ln('\tSide  = Color3.fromRGB('+hexRGB(cSide)+'),');
+  ln('\tBg    = Color3.fromRGB('+hexRGB(cBg)+'),');
+  ln('\tBtn   = Color3.fromRGB('+hexRGB(cBtn)+'),');
+  if (useNeon) {
+    ln('\tNeon1 = Color3.fromRGB('+hexRGB(cN1)+'),');
+    ln('\tNeon2 = Color3.fromRGB('+hexRGB(cN2)+'),');
+  }
+  ln('\tWhite = Color3.fromRGB(255,255,255),');
+  ln('\tGray  = Color3.fromRGB(55,55,70),');
+  ln('\tGreen = Color3.fromRGB(50,205,50),');
+  ln('\tRed   = Color3.fromRGB(220,50,50)');
+  ln('}');
+  ln();
+
+  if (useNeon) {
+    ln('local NEON = ColorSequence.new({');
+    ln('\tColorSequenceKeypoint.new(0, C.Neon1),');
+    ln('\tColorSequenceKeypoint.new(1, C.Neon2)');
+    ln('})');
+    ln();
+  }
+
+  // ── HELPERS ──
+  ln('local function tw(obj, props, dur, style, dir)');
+  ln('\tif not obj or not obj.Parent then return end');
+  ln('\tpcall(function()');
+  ln('\t\tTweenService:Create(obj,TweenInfo.new(dur or 0.3, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out),props):Play()');
+  ln('\tend)');
+  ln('end');
+  ln();
+
+  ln('local function notify(txt)');
+  ln('\tpcall(function()');
+  ln('\t\tgame.StarterGui:SetCore("SendNotification",{Title="'+hubName+'",Text=txt,Duration=3})');
+  ln('\tend)');
+  ln('end');
+  ln();
+
+  ln('local function mkCorner(p,r)');
+  ln('\tlocal c=Instance.new("UICorner",p)');
+  ln('\tc.CornerRadius=UDim.new(0,r or 8)');
+  ln('end');
+  ln();
+
+  ln('local function mkStroke(p,col,th)');
+  ln('\tlocal s=Instance.new("UIStroke",p)');
+  ln('\ts.Color=col');
+  ln('\ts.Thickness=th or 2');
+  if (useNeon) {
+    ln('\tlocal g=Instance.new("UIGradient",s)');
+    ln('\tg.Color=NEON');
+    ln('\tg.Rotation=90');
+  }
+  ln('end');
+  ln();
+
+  ln('local function mkGrad(p)');
+  if (useNeon) {
+    ln('\tlocal g=Instance.new("UIGradient",p)');
+    ln('\tg.Color=NEON');
+    ln('\tg.Rotation=90');
+  } else {
+    ln('\t-- no gradient');
+  }
+  ln('end');
+  ln();
+
+  // ── SCREENGUI ──
+  ln('local sg = Instance.new("ScreenGui")');
+  ln('sg.Name="'+toKey(hubName)+'"');
+  ln('sg.ResetOnSpawn=false');
+  ln('sg.ZIndexBehavior=Enum.ZIndexBehavior.Sibling');
+  ln('sg.Parent=game.CoreGui');
+  ln();
+
+  // ── ICON BTN ──
+  ln('local iconBtn=Instance.new("TextButton")');
+  ln('iconBtn.Size=UDim2.new(0,70,0,70)');
+  ln('iconBtn.Position=UDim2.new(0,20,0,20)');
+  ln('iconBtn.BackgroundColor3=C.Bg');
+  ln('iconBtn.BorderSizePixel=0');
+  ln('iconBtn.Active=true');
+  ln('iconBtn.Draggable=true');
+  ln('iconBtn.Parent=sg');
+  if (useImg) {
+    ln('iconBtn.Text=""');
+    ln('local ii=Instance.new("ImageLabel",iconBtn)');
+    ln('ii.Size=UDim2.new(1,-6,1,-6)');
+    ln('ii.Position=UDim2.new(0,3,0,3)');
+    ln('ii.BackgroundTransparency=1');
+    ln('ii.Image="'+imgId+'"');
+    ln('ii.ScaleType=Enum.ScaleType.Fit');
+  } else {
+    ln('iconBtn.Text="'+letters+'"');
+    ln('iconBtn.TextColor3=C.'+(useNeon?'Neon1':'Side'));
+    ln('iconBtn.Font=Enum.Font.GothamBlack');
+    ln('iconBtn.TextSize=24');
+  }
+  ln('mkCorner(iconBtn,14)');
+  ln('mkStroke(iconBtn,C.Side,3)');
+  ln();
+
+  // ── MAIN FRAME ──
+  ln('local mf=Instance.new("Frame")');
+  ln('mf.Name="Main"');
+  ln('mf.Size=UDim2.new(0,260,0,240)');
+  ln('mf.Position=UDim2.new(0.5,-130,0.5,-120)');
+  ln('mf.BackgroundColor3=C.Bg');
+  ln('mf.BorderSizePixel=0');
+  ln('mf.Active=true');
+  ln('mf.Draggable=true');
+  ln('mf.Visible=false');
+  ln('mf.ClipsDescendants=true');
+  ln('mf.Parent=sg');
+  ln('mkCorner(mf,15)');
+  ln('mkStroke(mf,C.Side,3)');
+  ln();
+
+  // ── TOP BAR ──
+  ln('local topBar=Instance.new("Frame")');
+  ln('topBar.Size=UDim2.new(1,0,0,50)');
+  ln('topBar.BackgroundColor3=C.Side');
+  ln('topBar.BorderSizePixel=0');
+  ln('topBar.Parent=mf');
+  ln('mkCorner(topBar,15)');
+  ln('mkGrad(topBar)');
+  ln('local topCover=Instance.new("Frame")');
+  ln('topCover.Size=UDim2.new(1,0,0,15)');
+  ln('topCover.Position=UDim2.new(0,0,1,-15)');
+  ln('topCover.BackgroundColor3=C.Side');
+  ln('topCover.BorderSizePixel=0');
+  ln('topCover.Parent=topBar');
+  ln('mkGrad(topCover)');
+  ln();
+
+  // top icon label
+  ln('local topIcon=Instance.new("TextLabel")');
+  ln('topIcon.Size=UDim2.new(0,35,0,35)');
+  ln('topIcon.Position=UDim2.new(0,8,0.5,-17.5)');
+  ln('topIcon.BackgroundColor3=C.Bg');
+  ln('topIcon.Text="'+(useImg?'':letters)+'"');
+  ln('topIcon.TextColor3=C.'+(useNeon?'Neon1':'White'));
+  ln('topIcon.Font=Enum.Font.GothamBlack');
+  ln('topIcon.TextSize=12');
+  ln('topIcon.BorderSizePixel=0');
+  ln('topIcon.Parent=topBar');
+  ln('mkCorner(topIcon,8)');
+  ln();
+
+  // title
+  ln('local titleLbl=Instance.new("TextLabel")');
+  ln('titleLbl.Size=UDim2.new(0,160,0,20)');
+  ln('titleLbl.Position=UDim2.new(0,50,0,8)');
+  ln('titleLbl.BackgroundTransparency=1');
+  ln('titleLbl.Text="'+hubName+'"');
+  ln('titleLbl.Font=Enum.Font.GothamBold');
+  ln('titleLbl.TextSize=16');
+  ln('titleLbl.TextColor3=C.White');
+  ln('titleLbl.TextXAlignment=Enum.TextXAlignment.Left');
+  ln('titleLbl.Parent=topBar');
+  ln();
+
+  // subtitle
+  ln('local subLbl=Instance.new("TextLabel")');
+  ln('subLbl.Size=UDim2.new(0,160,0,16)');
+  ln('subLbl.Position=UDim2.new(0,50,0,28)');
+  ln('subLbl.BackgroundTransparency=1');
+  ln('subLbl.Text="'+hubSub+'"');
+  ln('subLbl.Font=Enum.Font.Gotham');
+  ln('subLbl.TextSize=9');
+  ln('subLbl.TextColor3=Color3.fromRGB(180,180,200)');
+  ln('subLbl.TextXAlignment=Enum.TextXAlignment.Left');
+  ln('subLbl.Parent=topBar');
+  ln();
+
+  // minimize only (no close)
+  ln('local minBtn=Instance.new("TextButton")');
+  ln('minBtn.Size=UDim2.new(0,25,0,25)');
+  ln('minBtn.Position=UDim2.new(1,-30,0.5,-12.5)');
+  ln('minBtn.Text="-"');
+  ln('minBtn.BackgroundColor3=C.Bg');
+  ln('minBtn.TextColor3=C.White');
+  ln('minBtn.Font=Enum.Font.GothamBold');
+  ln('minBtn.TextSize=16');
+  ln('minBtn.BorderSizePixel=0');
+  ln('minBtn.Parent=topBar');
+  ln('mkCorner(minBtn,6)');
+  ln();
+
+  // ── TAB BAR ──
+  ln('local tabCont=Instance.new("Frame")');
+  ln('tabCont.Size=UDim2.new(1,-16,0,30)');
+  ln('tabCont.Position=UDim2.new(0,8,0,58)');
+  ln('tabCont.BackgroundTransparency=1');
+  ln('tabCont.Parent=mf');
+  ln();
+  ln('local tabBtns={}');
+  ln('local tNames={'+tabNames.map(function(t){return '"'+t+'"';}).join(',')+'} ');
+  ln('local tW=(260-24)/'+tabNames.length);
+  ln('for i,tn in ipairs(tNames) do');
+  ln('\tlocal b=Instance.new("TextButton")');
+  ln('\tb.Size=UDim2.new(0,tW-4,0,30)');
+  ln('\tb.Position=UDim2.new(0,(i-1)*tW+2,0,0)');
+  ln('\tb.Text=tn');
+  ln('\tb.BackgroundColor3=(i==1) and C.Side or C.Btn');
+  ln('\tb.TextColor3=C.White');
+  ln('\tb.Font=Enum.Font.GothamBold');
+  ln('\tb.TextSize=11');
+  ln('\tb.BorderSizePixel=0');
+  ln('\tb.Parent=tabCont');
+  ln('\tmkCorner(b,8)');
+  ln('\ttabBtns[tn]=b');
+  ln('end');
+  ln();
+
+  // ── CONTENT ──
+  ln('local cf=Instance.new("Frame")');
+  ln('cf.Size=UDim2.new(1,-16,1,-100)');
+  ln('cf.Position=UDim2.new(0,8,0,92)');
+  ln('cf.BackgroundTransparency=1');
+  ln('cf.Parent=mf');
+  ln();
+  ln('local cConts={}');
+  ln('for i,tn in ipairs(tNames) do');
+  ln('\tlocal sc=Instance.new("ScrollingFrame")');
+  ln('\tsc.Name=tn');
+  ln('\tsc.Size=UDim2.new(1,0,1,0)');
+  ln('\tsc.BackgroundTransparency=1');
+  ln('\tsc.BorderSizePixel=0');
+  ln('\tsc.ScrollBarThickness=4');
+  ln('\tsc.ScrollBarImageColor3=C.Side');
+  ln('\tsc.Visible=(i==1)');
+  ln('\tsc.CanvasSize=UDim2.new(0,0,0,500)');
+  ln('\tsc.Parent=cf');
+  ln('\tcConts[tn]=sc');
+  ln('end');
+  ln();
+
+  // ── TOGGLE REFS ──
+  ln('local toggleRefs={}');
+  ln();
+
+  // ── TOGGLE FACTORY ──
+  ln('local function mkToggle(parent, text, key, posY, textColorRGB, callback)');
+  ln('\tlocal con=Instance.new("Frame")');
+  ln('\tcon.Size=UDim2.new(1,-8,0,28)');
+  ln('\tcon.Position=UDim2.new(0,4,0,posY)');
+  ln('\tcon.BackgroundColor3=C.Btn');
+  ln('\tcon.BorderSizePixel=0');
+  ln('\tcon.Parent=parent');
+  ln('\tmkCorner(con,8)');
+  ln('\tmkStroke(con,C.Side,1)');
+  ln('\tlocal lbl=Instance.new("TextLabel")');
+  ln('\tlbl.Size=UDim2.new(1,-50,1,0)');
+  ln('\tlbl.Position=UDim2.new(0,8,0,0)');
+  ln('\tlbl.BackgroundTransparency=1');
+  ln('\tlbl.Text=text');
+  ln('\tlbl.Font=Enum.Font.GothamSemibold');
+  ln('\tlbl.TextSize=10');
+  ln('\tlbl.TextColor3=textColorRGB');
+  ln('\tlbl.TextXAlignment=Enum.TextXAlignment.Left');
+  ln('\tlbl.Parent=con');
+  ln('\tlocal track=Instance.new("Frame")');
+  ln('\ttrack.Size=UDim2.new(0,40,0,20)');
+  ln('\ttrack.Position=UDim2.new(1,-44,0.5,-10)');
+  ln('\ttrack.BackgroundColor3=C.Gray');
+  ln('\ttrack.BorderSizePixel=0');
+  ln('\ttrack.Parent=con');
+  ln('\tmkCorner(track,10)');
+  ln('\tlocal ind=Instance.new("Frame")');
+  ln('\tind.Size=UDim2.new(0,16,0,16)');
+  ln('\tind.Position=UDim2.new(0,2,0.5,-8)');
+  ln('\tind.BackgroundColor3=C.White');
+  ln('\tind.BorderSizePixel=0');
+  ln('\tind.Parent=track');
+  ln('\tmkCorner(ind,8)');
+  ln('\tlocal function setState(on)');
+  ln('\t\tCONFIG[key]=on');
+  ln('\t\tif on then');
+  ln('\t\t\ttw(ind,{Position=UDim2.new(1,-18,0.5,-8),BackgroundColor3=C.Side},0.2)');
+  ln('\t\t\ttw(track,{BackgroundColor3=C.Side},0.2)');
+  ln('\t\telse');
+  ln('\t\t\ttw(ind,{Position=UDim2.new(0,2,0.5,-8),BackgroundColor3=C.White},0.2)');
+  ln('\t\t\ttw(track,{BackgroundColor3=C.Gray},0.2)');
+  ln('\t\tend');
+  ln('\t\tif callback then task.spawn(function() pcall(callback,on) end) end');
+  ln('\tend');
+  ln('\ttoggleRefs[key]=setState');
+  ln('\tlocal cb=Instance.new("TextButton")');
+  ln('\tcb.Size=UDim2.new(1,0,1,0)');
+  ln('\tcb.BackgroundTransparency=1');
+  ln('\tcb.Text=""');
+  ln('\tcb.Parent=con');
+  ln('\tcb.MouseButton1Click:Connect(function() setState(not CONFIG[key]) end)');
+  ln('\treturn con');
+  ln('end');
+  ln();
+
+  // ── SLIDER FACTORY ──
+  ln('local function mkSlider(parent, text, key, minV, maxV, posY, textColorRGB, callback)');
+  ln('\tlocal con=Instance.new("Frame")');
+  ln('\tcon.Size=UDim2.new(1,-8,0,50)');
+  ln('\tcon.Position=UDim2.new(0,4,0,posY)');
+  ln('\tcon.BackgroundColor3=C.Btn');
+  ln('\tcon.BorderSizePixel=0');
+  ln('\tcon.Parent=parent');
+  ln('\tmkCorner(con,8)');
+  ln('\tmkStroke(con,C.Side,1)');
+  ln('\tlocal lbl=Instance.new("TextLabel")');
+  ln('\tlbl.Size=UDim2.new(1,-12,0,20)');
+  ln('\tlbl.Position=UDim2.new(0,8,0,4)');
+  ln('\tlbl.BackgroundTransparency=1');
+  ln('\tlbl.Text=text..": "..CONFIG[key]');
+  ln('\tlbl.Font=Enum.Font.GothamBold');
+  ln('\tlbl.TextSize=10');
+  ln('\tlbl.TextColor3=textColorRGB');
+  ln('\tlbl.TextXAlignment=Enum.TextXAlignment.Left');
+  ln('\tlbl.Parent=con');
+  ln('\tlocal bg=Instance.new("Frame")');
+  ln('\tbg.Size=UDim2.new(1,-16,0,10)');
+  ln('\tbg.Position=UDim2.new(0,8,0,32)');
+  ln('\tbg.BackgroundColor3=C.Gray');
+  ln('\tbg.BorderSizePixel=0');
+  ln('\tbg.Parent=con');
+  ln('\tmkCorner(bg,5)');
+  ln('\tlocal pct=(CONFIG[key]-minV)/(maxV-minV)');
+  ln('\tlocal fill=Instance.new("Frame")');
+  ln('\tfill.Size=UDim2.new(pct,0,1,0)');
+  ln('\tfill.BackgroundColor3=C.Side');
+  ln('\tfill.BorderSizePixel=0');
+  ln('\tfill.Parent=bg');
+  ln('\tmkCorner(fill,5)');
+  if (useNeon) {
+    ln('\tlocal fg=Instance.new("UIGradient",fill)');
+    ln('\tfg.Color=NEON');
+    ln('\tfg.Rotation=0');
+  }
+  ln('\tlocal knob=Instance.new("Frame")');
+  ln('\tknob.Size=UDim2.new(0,16,0,16)');
+  ln('\tknob.Position=UDim2.new(pct,-8,0.5,-8)');
+  ln('\tknob.BackgroundColor3=C.White');
+  ln('\tknob.BorderSizePixel=0');
+  ln('\tknob.Parent=bg');
+  ln('\tmkCorner(knob,8)');
+  ln('\tmkStroke(knob,C.Side,2)');
+  ln('\tlocal drag=false');
+  ln('\tlocal function upd(inp)');
+  ln('\t\tpcall(function()');
+  ln('\t\t\tlocal pos=math.clamp((inp.Position.X-bg.AbsolutePosition.X)/bg.AbsoluteSize.X,0,1)');
+  ln('\t\t\tlocal val=math.floor(minV+(maxV-minV)*pos)');
+  ln('\t\t\tCONFIG[key]=val');
+  ln('\t\t\tlbl.Text=text..": "..val');
+  ln('\t\t\tfill.Size=UDim2.new(pos,0,1,0)');
+  ln('\t\t\tknob.Position=UDim2.new(pos,-8,0.5,-8)');
+  ln('\t\t\tif callback then task.spawn(function() pcall(callback,val) end) end');
+  ln('\t\tend)');
+  ln('\tend');
+  ln('\tbg.InputBegan:Connect(function(i)');
+  ln('\t\tif i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then drag=true upd(i) end');
+  ln('\tend)');
+  ln('\tbg.InputEnded:Connect(function(i)');
+  ln('\t\tif i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then drag=false end');
+  ln('\tend)');
+  ln('\tUserInputService.InputChanged:Connect(function(i)');
+  ln('\t\tif drag and(i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then upd(i) end');
+  ln('\tend)');
+  ln('\treturn con');
+  ln('end');
+  ln();
+
+  // ── FPS ──
+  if (useFPS) {
+    ln('local fpsCont=Instance.new("Frame")');
+    ln('fpsCont.Size=UDim2.new(0,80,0,30)');
+    ln('fpsCont.Position=UDim2.new(1,-90,0,10)');
+    ln('fpsCont.BackgroundColor3=C.Bg');
+    ln('fpsCont.BorderSizePixel=0');
+    ln('fpsCont.Visible=false');
+    ln('fpsCont.Active=true');
+    ln('fpsCont.Draggable=true');
+    ln('fpsCont.Parent=sg');
+    ln('mkCorner(fpsCont,8)');
+    ln('mkStroke(fpsCont,C.Side,2)');
+    ln('local fpsLbl=Instance.new("TextLabel")');
+    ln('fpsLbl.Size=UDim2.new(1,0,1,0)');
+    ln('fpsLbl.BackgroundTransparency=1');
+    ln('fpsLbl.Text="FPS: 0"');
+    ln('fpsLbl.Font=Enum.Font.GothamBold');
+    ln('fpsLbl.TextSize=12');
+    ln('fpsLbl.TextColor3=C.Side');
+    ln('fpsLbl.Parent=fpsCont');
+    ln();
+  }
+
+  // ── MINI INTERFACES ──
+  if (validMinis.length > 0) {
+    ln('-- Mini interfaces');
+    ln('local miniFrames={}');
+    ln('local miniBtns={}');
+    ln();
+    validMinis.forEach(function(mini){
+      var vn = 'mini_'+mini.linkedKey;
+      var bn = 'miniBtn_'+mini.linkedKey;
+      ln('local '+vn+'=Instance.new("Frame")');
+      ln(vn+'.Name="'+vn+'"');
+      ln(vn+'.Size=UDim2.new(0,160,0,80)');
+      ln(vn+'.Position=UDim2.new(0,110,0.4,0)');
+      ln(vn+'.BackgroundColor3=C.Bg');  // same as main bg
+      ln(vn+'.BorderSizePixel=0');
+      ln(vn+'.Active=true');
+      ln(vn+'.Draggable=true');
+      ln(vn+'.Visible=false');
+      ln(vn+'.Parent=sg');
+      ln('mkCorner('+vn+',10)');
+      ln('mkStroke('+vn+',C.Side,2)');
+      // title bar strip
+      ln('local '+vn+'_top=Instance.new("Frame")');
+      ln(vn+'_top.Size=UDim2.new(1,0,0,28)');
+      ln(vn+'_top.BackgroundColor3=C.Side');
+      ln(vn+'_top.BorderSizePixel=0');
+      ln(vn+'_top.Parent='+vn);
+      ln('mkCorner('+vn+'_top,10)');
+      ln('mkGrad('+vn+'_top)');
+      ln('local '+vn+'_cover=Instance.new("Frame")');
+      ln(vn+'_cover.Size=UDim2.new(1,0,0,10)');
+      ln(vn+'_cover.Position=UDim2.new(0,0,1,-10)');
+      ln(vn+'_cover.BackgroundColor3=C.Side');
+      ln(vn+'_cover.BorderSizePixel=0');
+      ln(vn+'_cover.Parent='+vn+'_top');
+      ln('mkGrad('+vn+'_cover)');
+      ln('local '+vn+'_title=Instance.new("TextLabel")');
+      ln(vn+'_title.Size=UDim2.new(1,-8,1,0)');
+      ln(vn+'_title.Position=UDim2.new(0,8,0,0)');
+      ln(vn+'_title.BackgroundTransparency=1');
+      ln(vn+'_title.Text="'+mini.title+'"');
+      ln(vn+'_title.Font=Enum.Font.GothamBold');
+      ln(vn+'_title.TextSize=11');
+      ln(vn+'_title.TextColor3=C.White');
+      ln(vn+'_title.TextXAlignment=Enum.TextXAlignment.Left');
+      ln(vn+'_title.Parent='+vn+'_top');
+      // action button
+      ln('local '+bn+'=Instance.new("TextButton")');
+      ln(bn+'.Size=UDim2.new(1,-12,0,32)');
+      ln(bn+'.Position=UDim2.new(0,6,0,36)');
+      ln(bn+'.BackgroundColor3=C.Side');
+      ln(bn+'.Text="'+mini.btnText+'"');
+      ln(bn+'.TextColor3=C.White');
+      ln(bn+'.Font=Enum.Font.GothamBold');
+      ln(bn+'.TextSize=12');
+      ln(bn+'.BorderSizePixel=0');
+      ln(bn+'.Parent='+vn);
+      ln('mkCorner('+bn+',7)');
+      if (useNeon) {
+        ln('local '+bn+'_g=Instance.new("UIGradient",'+bn+')');
+        ln(bn+'_g.Color=NEON');
+        ln(bn+'_g.Rotation=90');
+      }
+      // click toggles the linked key
+      ln(bn+'.MouseButton1Click:Connect(function()');
+      ln('\tif toggleRefs["'+mini.linkedKey+'"] then');
+      ln('\t\ttoggleRefs["'+mini.linkedKey+'"](not CONFIG["'+mini.linkedKey+'"])');
+      ln('\tend');
+      ln('end)');
+      ln('miniFrames["'+mini.linkedKey+'"]='+vn);
+      ln('miniBtns["'+mini.linkedKey+'"]='+bn);
+      ln();
+    });
+
+    // helper to update mini button color
+    ln('local function updateMiniBtn(key, on)');
+    ln('\tlocal b=miniBtns[key]');
+    ln('\tif not b then return end');
+    ln('\ttw(b,{BackgroundColor3=on and C.Red or C.Side},0.2)');
+    ln('end');
+    ln();
+  }
+
+  // ── POPULATE TABS ──
+  ln('-- Buttons');
+  tabNames.forEach(function(tab){
+    var posY = 6;
+    (buttons[tab]||[]).forEach(function(btn){
+      var key = toKey(btn.name);
+      var col = 'Color3.fromRGB('+hexRGB(btn.color||'#ffffff')+')';
+      var hasMini = validMinis.some(function(m){ return m.linkedKey===key; });
+
+      if (btn.type === 'toggle') {
+        // Build callback
+        var cbLines = [];
+        if (key === 'DisableParticles') {
+          cbLines.push('\tfor _,obj in pairs(workspace:GetDescendants()) do');
+          cbLines.push('\t\tpcall(function()');
+          cbLines.push('\t\t\tif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") then');
+          cbLines.push('\t\t\t\tobj.Enabled=not on');
+          cbLines.push('\t\t\tend');
+          cbLines.push('\t\tend)');
+          cbLines.push('\tend');
+        }
+        if (key === 'ShowFPS' && useFPS) {
+          cbLines.push('\tfpsCont.Visible=on');
+        }
+        if (hasMini) {
+          cbLines.push('\tlocal mf2=miniFrames["'+key+'"]');
+          cbLines.push('\tif mf2 then mf2.Visible=on end');
+          cbLines.push('\tupdateMiniBtn("'+key+'",on)');
+        }
+
+        if (cbLines.length > 0) {
+          ln('mkToggle(cConts["'+tab+'"],"'+btn.name+'","'+key+'",'+posY+','+col+',function(on)');
+          cbLines.forEach(function(l){ ln(l); });
+          ln('end)');
+        } else {
+          ln('mkToggle(cConts["'+tab+'"],"'+btn.name+'","'+key+'",'+posY+','+col+')');
+        }
+        posY += 34;
+      } else {
+        ln('mkSlider(cConts["'+tab+'"],"'+btn.name+'","'+key+'",'+
+           (btn.min||0)+','+
+           (btn.max||100)+','+
+           posY+','+col+')');
+        posY += 56;
+      }
+    });
+  });
+  ln();
+
+  // ── TAB SWITCHING ──
+  ln('for tn,b in pairs(tabBtns) do');
+  ln('\tb.MouseButton1Click:Connect(function()');
+  ln('\t\tcurrentTab=tn');
+  ln('\t\tfor n,bt in pairs(tabBtns) do bt.BackgroundColor3=(n==tn) and C.Side or C.Btn end');
+  ln('\t\tfor n,sc in pairs(cConts) do sc.Visible=(n==tn) end');
+  ln('\tend)');
+  ln('end');
+  ln();
+
+  // ── OPEN/CLOSE ──
+  ln('local menuOpen=false');
+  ln('iconBtn.MouseButton1Click:Connect(function()');
+  ln('\tmenuOpen=not menuOpen');
+  ln('\tif menuOpen then');
+  if (useAnim) {
+    ln('\t\tmf.Size=UDim2.new(0,0,0,0)');
+    ln('\t\tmf.Position=UDim2.new(0.5,0,0.5,0)');
+    ln('\t\tmf.Visible=true');
+    ln('\t\ttw(mf,{Size=UDim2.new(0,260,0,240),Position=UDim2.new(0.5,-130,0.5,-120)},0.4,Enum.EasingStyle.Back)');
+  } else {
+    ln('\t\tmf.Visible=true');
+  }
+  if (useNotif) ln('\t\tnotify("Aberto!")');
+  ln('\telse');
+  if (useAnim) {
+    ln('\t\ttw(mf,{Size=UDim2.new(0,0,0,0),Position=UDim2.new(0.5,0,0.5,0)},0.3)');
+    ln('\t\ttask.wait(0.3)');
+  }
+  ln('\t\tmf.Visible=false');
+  ln('\tend');
+  ln('end)');
+  ln();
+  ln('minBtn.MouseButton1Click:Connect(function()');
+  ln('\tmenuOpen=false');
+  if (useAnim) {
+    ln('\ttw(mf,{Size=UDim2.new(0,0,0,0),Position=UDim2.new(0.5,0,0.5,0)},0.3)');
+    ln('\ttask.wait(0.3)');
+  }
+  ln('\tmf.Visible=false');
+  ln('end)');
+  ln();
+
+  // ── SUPER JUMP ──
+  if (hasSuperJump) {
+    ln('connections.sj=UserInputService.JumpRequest:Connect(function()');
+    ln('\tif not CONFIG.SuperJump then return end');
+    ln('\tpcall(function()');
+    ln('\t\tlocal char=player.Character');
+    ln('\t\tif not char then return end');
+    ln('\t\tlocal hum=char:FindFirstChildWhichIsA("Humanoid")');
+    ln('\t\tlocal hrp=char:FindFirstChild("HumanoidRootPart")');
+    ln('\t\tif hum and hrp then');
+    ln('\t\t\thum:ChangeState(Enum.HumanoidStateType.Jumping)');
+    ln('\t\t\ttask.wait(0.05)');
+    ln('\t\t\thrp.Velocity=Vector3.new(hrp.Velocity.X,'+(hasJumpPower?'CONFIG.JumpPower':'150')+',hrp.Velocity.Z)');
+    ln('\t\tend');
+    ln('\tend)');
+    ln('end)');
+    ln();
+  }
+
+  // ── WALK SPEED ──
+  if (hasWalkSpeed) {
+    ln('connections.ws=RunService.Heartbeat:Connect(function()');
+    ln('\tpcall(function()');
+    ln('\t\tlocal char=player.Character');
+    ln('\t\tif not char then return end');
+    ln('\t\tlocal hum=char:FindFirstChildWhichIsA("Humanoid")');
+    ln('\t\tif hum then hum.WalkSpeed=CONFIG.WalkSpeed end');
+    ln('\tend)');
+    ln('end)');
+    ln();
+  }
+
+  // ── FPS LOGIC ──
+  if (useFPS) {
+    ln('local _ff,_fl=0,tick()');
+    ln('connections.fps=RunService.Heartbeat:Connect(function()');
+    ln('\t_ff=_ff+1');
+    ln('\tlocal now=tick()');
+    ln('\tif now-_fl>=1 then');
+    ln('\t\tif fpsLbl and fpsLbl.Parent then');
+    ln('\t\t\tfpsLbl.Text="FPS: ".._ff');
+    ln('\t\t\tif _ff>=55 then fpsLbl.TextColor3=C.Green');
+    ln('\t\t\telseif _ff>=30 then fpsLbl.TextColor3=Color3.fromRGB(255,165,0)');
+    ln('\t\t\telse fpsLbl.TextColor3=C.Red end');
+    ln('\t\tend');
+    ln('\t\t_ff=0 _fl=now');
+    ln('\tend');
+    ln('end)');
+    ln();
+  }
+
+  // ── RGB ──
+  if (useRGB) {
+    ln('local _hue=0');
+    ln('connections.rgb=RunService.Heartbeat:Connect(function()');
+    ln('\t_hue=(_hue+0.0008)%1');
+    ln('\tif titleLbl and titleLbl.Parent then titleLbl.TextColor3=Color3.fromHSV(_hue,0.55,1) end');
+    ln('end)');
+    ln();
+  }
+
+  ln('-- Hub loaded!');
+  return L.join('\n');
+}
+
+// ── GENERATE ─────────────────────────────────────────────────────────────────
+function generateScript() {
+  generatedScript = buildScript();
+  var esc = generatedScript
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/(--[^\n]*)/g,'<span style="color:#454558">$1</span>')
+    .replace(/\b(local|function|end|if|then|else|elseif|not|and|or|return|for|in|do|while|repeat|until|true|false|nil|pairs|ipairs|task|pcall|math)\b/g,'<span style="color:#9d87fc">$1</span>')
+    .replace(/("[^"]*")/g,'<span style="color:#fc7da0">$1</span>')
+    .replace(/\b(\d+)\b/g,'<span style="color:#73dfa6">$1</span>');
+  document.getElementById('outWrap').innerHTML = '<div class="out-area"><code>'+esc+'</code></div>';
+  document.getElementById('outActions').style.display = 'flex';
+  document.getElementById('outWrap').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── COPY ─────────────────────────────────────────────────────────────────────
+function copyScript() {
+  if (!generatedScript) return;
+  var btn = document.getElementById('copyBtn');
+  function ok() {
+    btn.textContent='✅ Copiado!'; btn.classList.add('ok');
+    setTimeout(function(){btn.textContent='📋 Copiar Script';btn.classList.remove('ok');},2500);
+  }
+  if (window.navigator && window.navigator.clipboard && window.navigator.clipboard.writeText) {
+    window.navigator.clipboard.writeText(generatedScript).then(ok).catch(fb); return;
+  }
+  fb();
+  function fb() {
+    try {
+      var ta=document.getElementById('__ta');
+      ta.value=generatedScript;
+      ta.style.cssText='position:fixed;top:0;left:0;width:2em;height:2em;opacity:.01;z-index:9999;';
+      ta.focus(); ta.select(); ta.setSelectionRange(0,999999);
+      var r=document.execCommand('copy');
+      ta.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;';
+      if(r){ok();return;}
+    } catch(e){}
+    var b=new Blob([generatedScript],{type:'text/plain'});
+    window.open(URL.createObjectURL(b),'_blank');
+    btn.textContent='📄 Nova aba — Ctrl+A e Ctrl+C'; btn.classList.add('ok');
+    setTimeout(function(){btn.textContent='📋 Copiar Script';btn.classList.remove('ok');},4000);
+  }
+}
+
+function dlScript() {
+  if (!generatedScript) return;
+  var name=(gv('hubName')||'hub').replace(/[^a-z0-9]/gi,'_');
+  var b=new Blob([generatedScript],{type:'text/plain'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name+'_hub.lua'; a.click();
+}
+
+function init(){ renderTabs(); renderButtons(); renderMinis(); }
+init();
+</script>
+</body>
+</html>
